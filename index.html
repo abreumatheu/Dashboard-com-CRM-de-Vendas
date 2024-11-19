@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Atendimentos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        header {
+            background-color: #232323;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        .logo {
+            display: block;
+            margin: 0 auto 20px;
+            width: 150px;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .chart-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #232323;
+            color: white;
+        }
+
+        .button-container {
+            margin-top: 20px;
+        }
+
+        .button-container button {
+            margin-right: 10px;
+            padding: 10px;
+            border: none;
+            background-color: #232323;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .button-container button:hover {
+            background-color: #ed7021;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="logo.png" alt="Logotipo" class="logo">
+        <h1>Dashboard de Atendimentos</h1>
+    </header>
+
+    <div class="container">
+        <div class="dashboard">
+            <div class="chart-container">
+                <h2>Gráfico de Atendimentos por Mês</h2>
+                <canvas id="chartAtendimentos"></canvas>
+            </div>
+            <div class="chart-container">
+                <h2>Tipos de Atendimentos</h2>
+                <canvas id="chartTipos"></canvas>
+            </div>
+        </div>
+
+        <h2>Relatório de Atendimentos</h2>
+        <table id="reportTable">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Cliente</th>
+                    <th>Tipo de Atendimento</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>01/09/2024</td>
+                    <td>João Silva</td>
+                    <td>Seguro de vida</td>
+                    <td>Concluído</td>
+                </tr>
+                <tr>
+                    <td>02/09/2024</td>
+                    <td>Maria Oliveira</td>
+                    <td>Seguro de vida</td>
+                    <td>Pendente</td>
+                </tr>
+                <!-- Adicionar mais linhas de relatório conforme necessário -->
+            </tbody>
+        </table>
+
+        <div class="button-container">
+            <button id="downloadExcel">Baixar Excel</button>
+            <button id="downloadPdf">Baixar PDF</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+    <script>
+        // Gráfico de Atendimentos
+        const ctx1 = document.getElementById('chartAtendimentos').getContext('2d');
+        const chartAtendimentos = new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio'],
+                datasets: [{
+                    label: 'Atendimentos',
+                    data: [12, 19, 3, 5, 2],
+                    borderColor: '#ed7021',
+                    fill: false
+                }]
+            }
+        });
+
+        // Gráfico de Tipos de Atendimento
+        const ctx2 = document.getElementById('chartTipos').getContext('2d');
+        const chartTipos = new Chart(ctx2, {
+            type: 'pie',
+            data: {
+                labels: ['Seguro de vida', 'Seguro Carro', 'Previdencia'],
+                datasets: [{
+                    data: [10, 20, 30],
+                    backgroundColor: ['#232323', '#ed7021', '#6c757d']
+                }]
+            }
+        });
+
+        // Função para baixar o relatório em Excel
+        document.getElementById('downloadExcel').addEventListener('click', function() {
+            const table = document.getElementById('reportTable');
+            const ws = XLSX.utils.table_to_sheet(table);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Relatório");
+            XLSX.writeFile(wb, "relatorio_atendimentos.xlsx");
+        });
+
+        // Função para baixar o relatório em PDF (incluindo os gráficos)
+        document.getElementById('downloadPdf').addEventListener('click', function() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Adicionar o título
+            doc.text('Relatório de Atendimentos', 14, 16);
+
+            // Adicionar o gráfico de Atendimentos
+            const chartAtendimentosCanvas = document.getElementById('chartAtendimentos');
+            const chartAtendimentosDataURL = chartAtendimentosCanvas.toDataURL('image/png');
+            doc.addImage(chartAtendimentosDataURL, 'PNG', 15, 30, 180, 80);
+
+            // Adicionar o gráfico de Tipos de Atendimento
+            const chartTiposCanvas = document.getElementById('chartTipos');
+            const chartTiposDataURL = chartTiposCanvas.toDataURL('image/png');
+            doc.addImage(chartTiposDataURL, 'PNG', 15, 120, 180, 80);
+
+            // Adicionar a tabela
+            doc.autoTable({
+                html: '#reportTable',
+                startY: 210,
+                headStyles: { fillColor: [35, 35, 35] },
+                margin: { top: 10 },
+            });
+
+            // Baixar o PDF
+            doc.save('relatorio_atendimentos.pdf');
+        });
+    </script>
+</body>
+</html>
